@@ -1,0 +1,14 @@
+{
+    "name": "gsartorelli/check-common-modules",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "CheckCommonModules\\": "src/"
+        }
+    },
+    "require": {
+        "knplabs/github-api": "^3.7",
+        "guzzlehttp/guzzle": "^7.4",
+        "symfony/filesystem": "^6.0"
+    }
+}
