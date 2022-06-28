@@ -3,6 +3,7 @@
 namespace CheckCommonModules;
 
 use M1\Env\Parser;
+use Symfony\Component\Filesystem\Path;
 
 final class Environment
 {
@@ -11,7 +12,8 @@ final class Environment
     private static function getParser()
     {
         if (!self::$parser) {
-            self::$parser = new Parser(file_get_contents('test_context.env'));
+            $envPath = Path::makeAbsolute(Path::canonicalize('.env'), getcwd());
+            self::$parser = new Parser(file_get_contents($envPath));
         }
         return self::$parser;
     }

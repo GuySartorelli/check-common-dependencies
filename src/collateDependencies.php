@@ -36,24 +36,38 @@ foreach (new DirectoryIterator($outputDir) as $fileInfo) {
         continue;
     }
 
-    // Skip modules, recipes, etc
-    if (isset($json['type']) && $json['type'] !== 'library' && $json['type'] !== 'project') {
+    // Skip modules, recipes, etc if possible
+    if ($mode === 'json' && (isset($json['type']) && $json['type'] !== 'library' && $json['type'] !== 'project')) {
         var_dump("Skipping $fileName because it is a type " . $json['type']);
         continue;
     }
 
     // Get a count of dependencies
-    foreach (['require', 'require-dev'] as $key) {
-        if (isset($json[$key])) {
-            foreach ($json[$key] as $repo => $constraint) {
-                // Skip php and php extensions
-                if ($repo === 'php' || (str_starts_with($repo, 'ext-') && !str_contains($repo, '/'))) {
-                    continue;
+    if ($mode === 'json') {
+        foreach (['require', 'require-dev'] as $key) {
+            if (isset($json[$key])) {
+                foreach ($json[$key] as $repo => $constraint) {
+                    // Skip php and php extensions
+                    if ($repo === 'php' || (str_starts_with($repo, 'ext-') && !str_contains($repo, '/'))) {
+                        continue;
+                    }
+                    if (!array_key_exists($repo, $dependencies)) {
+                        $dependencies[$repo] = 0;
+                    }
+                    $dependencies[$repo]++;
                 }
-                if (!array_key_exists($repo, $dependencies)) {
-                    $dependencies[$repo] = 0;
+            }
+        }
+    } else {
+        foreach (['packages', 'packages-dev'] as $key) {
+            if (isset($json[$key])) {
+                foreach ($json[$key] as $package) {
+                    $repo = $package['name'];
+                    if (!array_key_exists($repo, $dependencies)) {
+                        $dependencies[$repo] = 0;
+                    }
+                    $dependencies[$repo]++;
                 }
-                $dependencies[$repo]++;
             }
         }
     }
@@ -80,21 +94,18 @@ $records = [];
 // Gets the support status of a dependency (core, supported, satellite, or unknown)
 $getStatus = function(string $dependency) use ($supported): string
 {
+    // Check if the dependency is supported/core
     $isSupported = false;
     $isCore = false;
     foreach ($supported as $module) {
-        if ($module['github'] && $dependency === $module['github']) {
-            $isSupported = true;
-            $isCore = $module['isCore'];
-            continue;
-        }
-        if ($module['gitlab'] && $dependency === $module['gitlab']) {
+        if ($module['composer'] && $dependency === $module['composer']) {
             $isSupported = true;
             $isCore = $module['isCore'];
             continue;
         }
     }
 
+    // Return the correct status
     if ($isCore) {
         return 'core';
     }
@@ -120,4 +131,4 @@ $csv = Writer::createFromString();
 $csv->insertOne($header);
 $csv->insertAll($records);
 var_dump('Outputting CSV');
-file_put_contents(Path::join($outputDir, 'dependencies.csv'), $csv->toString());
+file_put_contents(Path::join($outputDir, "$mode-dependencies.csv"), $csv->toString());

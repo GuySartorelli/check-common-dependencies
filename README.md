@@ -18,8 +18,8 @@ php src/getRepos.php
 
 ## Parse the composer.json files and make a list of the most commonly used dependencies
 
-Outputs a file to output/dependencies.csv with a list of dependencies, their count, and what level of support
-it currently has (if known).
+Outputs a file to output/$MODE-dependencies.csv (i.e. json-dependencies.csv or lock-dependencies.csv) with a
+list of dependencies, their count, and what level of support it currently has (if known).
 
 ```bash
 php src/collateDependencies.php
